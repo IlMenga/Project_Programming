@@ -1,0 +1,15 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	1	DownloadData
+	1
+
+[Sun Sep 30 15:49:04 2018]
+rule DownloadData:
+    input: Code/GettingData.py
+    output: Data/today_prices.csvData/today_klines.csv
+    jobid: 0
+

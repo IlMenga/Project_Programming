@@ -1,0 +1,6 @@
+in_code: 'Code/'
+in_data: 'Data/'
+
+out_data: 'Data/'
+out_latex: 'Latex/'
+out_result: 'Result/'

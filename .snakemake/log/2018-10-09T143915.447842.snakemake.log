@@ -1,0 +1,4 @@
+Building DAG of jobs...
+MissingInputException in line 30 of /Users/paolomengano/Dropbox/1_Zurich/PhD/Second Year/Programming/Project/Snakefile:
+Missing input files for rule CherryOnTop:
+Input/Code/CherryOnTop.py

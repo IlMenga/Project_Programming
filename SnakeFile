@@ -1,0 +1,38 @@
+# Import configurations
+#configfile: 'config.yaml'
+
+# Misc
+run_R = 'Rscript --no-save  --no-restore --verbose'
+
+rule DownloadData:
+    input:
+        script = 'Code/GettingData.py',
+    output:
+        data = 'Data/today_klines.csv'
+    shell:
+        'python {input.script} {output.data}'
+
+rule Forecast:
+    input:
+        script = 'Code/Forecasting.R',
+        data = 'Data/today_klines.csv'
+    output:
+        data = 'Data/Forecasts.csv'
+    shell:
+        '{run_R} {input.script} {input.data} {output.data}'
+
+rule MakeLatex:
+    input:
+        script = 'Code/MakeLatex.R',
+        data = 'Data/Forecasts.csv'
+    output:
+        pdf = 'Results/Latex.pdf'
+    shell:
+        '{run_R} {input.script}'
+
+rule Billionaire:
+    input:
+        script = 'Code/CherryOnTop.py',
+        pdf = 'Results/Latex.pdf'
+    shell:
+        'python {input.script}'

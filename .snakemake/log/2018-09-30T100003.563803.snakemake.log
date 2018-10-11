@@ -1,0 +1,27 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	1	DownloadData
+	1
+
+[Sun Sep 30 10:00:03 2018]
+rule DownloadData:
+    input: Input/Code/GettingData.py
+    output: Output/Data/today_prices.csv
+    jobid: 0
+
+Terminating processes on user request, this might take some time.
+    [Sun Sep 30 10:00:51 2018]
+    Error in rule DownloadData:
+        jobid: 0
+        output: Output/Data/today_prices.csv
+
+RuleException:
+CalledProcessError in line 15 of /Users/paolomengano/Dropbox/1_Zurich/PhD/Second Year/Programming/Project/Snakefile:
+Command ' set -euo pipefail;  python Input/Code/GettingData.py ' returned non-zero exit status 1.
+  File "/Users/paolomengano/Dropbox/1_Zurich/PhD/Second Year/Programming/Project/Snakefile", line 15, in __rule_DownloadData
+  File "/Users/paolomengano/anaconda3/lib/python3.6/concurrent/futures/thread.py", line 56, in run
+Complete log: /Users/paolomengano/Dropbox/1_Zurich/PhD/Second Year/Programming/Project/.snakemake/log/2018-09-30T100003.563803.snakemake.log

@@ -1,0 +1,132 @@
+# This script reads data downloaded from Binance and prepares it for LASSO
+
+rm(list=ls())
+library(dplyr)
+library(tidyr)
+library(glmnet)
+library(tibble)
+library(rlang)
+
+#-----------------
+# DATA PREPARATION
+
+# Retrieving Arguments
+args <- commandArgs(trailingOnly = TRUE)
+# in_data <- args[1]
+in_data = 'Data/today_klines.csv'
+# out_file <- args[2]
+out_file = 'Data/Forecasts.csv'
+
+# Importing data
+today_klines <- read.csv(in_data, header = TRUE) %>%
+  select('Symbol', 'X', 'ClosePrice') %>%
+  spread(Symbol,ClosePrice)
+
+#  filter(Symbol == 'ETHBTC' | Symbol == 'LTCBTC' | Symbol == 'BTCUSDT') %>%
+
+y_index <- length(names(today_klines))
+x_index <- length(names(today_klines)) + 1
+
+# Generating lagged variables
+for (i in names(today_klines)) {
+  index <- which(colnames(today_klines) == i)
+  if (i != 'X') {
+    for (n in 1:10) {
+      today_klines[paste0(i,'.l',n)] = lag(today_klines[,i],n)
+    }
+  }
+}
+
+# Dropping missing values
+today_klines <- tail(today_klines, -n)
+
+#-----------------
+#     LASSO
+
+# Do we need a partition?
+y_vars <- names(today_klines)[2:y_index]
+lasso_vars <- list()
+for (i in 1:length(y_vars)){
+  y_name = y_vars[i]
+  y <- eval(parse(text = paste0('today_klines$',y_name) ))
+
+  fmla <- as.formula(paste(y_name,' ~ ',
+    paste(names(today_klines)[x_index:length(names(today_klines))], collapse= ' + ')
+  ))
+
+  x <- model.matrix(fmla, data=today_klines)[,-1]
+  glm.fit <- glmnet(x,y,lambda=0)
+  tmp_coeffs <- coef(glm.fit)
+  lasso_vars[[i]] <- data.frame(name = tmp_coeffs@Dimnames[[1]][tmp_coeffs@i + 1], 
+                                coefficient = tmp_coeffs@x)
+}
+
+
+#-----------------
+#     FORECASTING
+
+# 1) Getting Coefficients ----
+lm_vars <- list()
+for (i in 1:length(y_vars)){
+  y_name = y_vars[i]
+  y <- eval(parse(text = paste0('today_klines$',y_name) ))
+  fmla <- as.formula(paste(y_name,' ~ ',
+                           paste(lasso_vars[[1]]$name[2:length(lasso_vars[[1]]$name)], collapse= ' + ')
+  ))
+  ols.fit <- lm(fmla,data=today_klines)
+  tmp_coeffs <- coef(ols.fit)
+  lm_vars[[i]] <- data.frame(name = names(coef(ols.fit)), coefficient = coef(ols.fit))
+}
+
+# 2) Getting regressors ----
+library(stringr)
+get_regressors <- function(var_index){
+  # This functions returns exogenous regressors for forecasting. Include the variable
+  # index (in y_vars) as input (int)
+  y_regressors <- list()
+  y_regressors[[1]] <- as.character(lm_vars[[var_index]][['name']][1][1])
+  for (i_name in 2:length(lm_vars[[var_index]][['name']])){
+    if (str_sub(as.character(lm_vars[[var_index]][['name']][i_name]),-2,-2) == 'l'){
+      if (str_sub(as.character(lm_vars[[var_index]][['name']][i_name]),-1,-1) != '1'){
+        y_regressors[[i_name]] <- paste0(str_sub(as.character(lm_vars[[var_index]][['name']][i_name]),1,-2),
+                                         as.integer(str_sub(as.character(lm_vars[[var_index]][['name']][i_name]),-1))-1)
+      } else if (str_sub(as.character(lm_vars[[var_index]][['name']][i_name]),-1,-1) == '1'){
+        y_regressors[[i_name]] <- str_sub(as.character(lm_vars[[var_index]][['name']][i_name]),1,-4)
+      }
+    } else
+      if (str_sub(as.character(lm_vars[[var_index]][['name']][i_name]),-3,-3) == 'l') {
+        y_regressors[[i_name]] <- paste0(str_sub(as.character(lm_vars[[var_index]][['name']][i_name]),1,-3),
+                                         as.integer(str_sub(as.character(lm_vars[[var_index]][['name']][i_name]),-2,-1))-1)
+      }
+  }
+  lm_vars[[var_index]]['forecasters'] <- NA
+  for (item in 1:nrow(lm_vars[[var_index]])) {
+    lm_vars[[var_index]][item, 'forecasters'] <- y_regressors[[item]]
+  }
+  invisible(lm_vars)
+}
+
+for (i in 1:length(y_vars)){
+  lm_vars <- get_regressors(i)
+}
+
+# 3) Forecasting ----
+forecasts <- setNames(data.frame(matrix(ncol = 2, nrow = 1)), c('currency', 'forecast'))
+for (var in 1:length(y_vars)){
+  forecasts[var,'currency']<-y_vars[[var]]
+  forecasts[var,'forecast']<-lm_vars[[var]][1,'coefficient']
+  for (i in 2:nrow(lm_vars[[var]])){
+    if (!is.na(lm_vars[[1]][i,'coefficient'])) {
+      forecasts[var,'forecast']<-forecasts[var,'forecast'] +
+        today_klines[nrow(today_klines),lm_vars[[var]][i,'forecasters']]*
+        lm_vars[[var]][i,'coefficient']
+    } 
+  }
+}
+# Transforming in %
+for (var in 1:length(y_vars)){
+  forecasts[var,'forecast']<- (forecasts[var,'forecast'] - today_klines[nrow(today_klines),var+1])/today_klines[nrow(today_klines),var+1]  
+}  
+
+
+write.csv(forecasts, file = out_file)

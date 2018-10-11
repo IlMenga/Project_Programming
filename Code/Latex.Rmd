@@ -1,0 +1,33 @@
+---
+title: "Forecasting cryptocurrencies"
+author:
+- Paolo Mengano
+- Claude Raisaro
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Forecasting exercise
+These are our forecasts for the price variations in 30 minutes:
+```{r, echo = FALSE}
+rm(list=ls())
+setwd('../')
+in_path <- 'Data/Forecasts.csv'
+forecast <- read.csv(in_path, header = TRUE)
+```
+
+```{r, echo = FALSE}
+for (i in 1:nrow(forecast)) {
+  print (paste0('Currency: ', forecast[i,2], ', price variation in 30 minutes: ', format(round(forecast[i,3]*100, 4), nsmall = 2),'%'))
+}
+```
+
+
+
+

@@ -1,0 +1,28 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	1	Forecast
+	1
+
+[Tue Oct  9 13:15:10 2018]
+rule Forecast:
+    input: Code/Forecasting.R, Data/today_klines.csv
+    output: Data/Forecasts.csv
+    jobid: 0
+
+    [Tue Oct  9 13:15:12 2018]
+    Error in rule Forecast:
+        jobid: 0
+        output: Data/Forecasts.csv
+
+RuleException:
+CalledProcessError in line 22 of /Users/paolomengano/Dropbox/1_Zurich/PhD/Second Year/Programming/Project/Snakefile:
+Command ' set -euo pipefail;  Rscript --no-save  --no-restore --verbose Code/Forecasting.R Data/today_klines.csv Data/Forecasts.csv ' returned non-zero exit status 1.
+  File "/Users/paolomengano/Dropbox/1_Zurich/PhD/Second Year/Programming/Project/Snakefile", line 22, in __rule_Forecast
+  File "/Users/paolomengano/anaconda3/lib/python3.6/concurrent/futures/thread.py", line 56, in run
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /Users/paolomengano/Dropbox/1_Zurich/PhD/Second Year/Programming/Project/.snakemake/log/2018-10-09T131510.234807.snakemake.log

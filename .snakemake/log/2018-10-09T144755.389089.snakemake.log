@@ -1,0 +1,19 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	1	Forecast
+	1
+
+[Tue Oct  9 14:47:55 2018]
+rule Forecast:
+    input: Code/Forecasting.R, Data/today_klines.csv
+    output: Data/Forecasts.csv
+    jobid: 0
+
+[Tue Oct  9 14:47:57 2018]
+Finished job 0.
+1 of 1 steps (100%) done
+Complete log: /Users/paolomengano/Dropbox/1_Zurich/PhD/Second Year/Programming/Project/.snakemake/log/2018-10-09T144755.389089.snakemake.log
